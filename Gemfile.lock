@@ -1,0 +1,36 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    ansi (1.5.0)
+    ast (2.1.0)
+    daemons (1.2.3)
+    eventmachine (1.0.8)
+    oga (1.3.1)
+      ast
+      ruby-ll (~> 2.1)
+    rack (1.6.4)
+    rack-protection (1.5.3)
+      rack
+    ruby-ll (2.1.2)
+      ansi
+      ast
+    sinatra (1.4.6)
+      rack (~> 1.4)
+      rack-protection (~> 1.4)
+      tilt (>= 1.3, < 3)
+    thin (1.6.4)
+      daemons (~> 1.0, >= 1.0.9)
+      eventmachine (~> 1.0, >= 1.0.4)
+      rack (~> 1.0)
+    tilt (2.0.1)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  oga
+  sinatra
+  thin
+
+BUNDLED WITH
+   1.10.6
