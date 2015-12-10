@@ -44,8 +44,9 @@ class Message
   <FromUserName><![CDATA[#{sender}]]></FromUserName>
   <CreateTime>#{sent_at.to_i}</CreateTime>
   <MsgType><![CDATA[text]]></MsgType>
-  <Content><![CDATA[#{content}]]></Content>
-  #{"<MsgId>#{id}</MsgId>" unless id.nil?}
+  <Content><![CDATA[#{content}]]></Content>#{
+    "\n  <MsgId>#{id}</MsgId>" unless id.nil?
+  }
 </xml>
     XML
   end
