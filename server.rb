@@ -1,6 +1,8 @@
-require 'sinatra'
-require 'securerandom'
+require 'rubygems'
+require 'bundler/setup'
 require 'digest/sha1'
+require 'securerandom'
+require 'sinatra'
 require_relative 'message'
 
 configure :production do
