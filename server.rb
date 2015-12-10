@@ -5,7 +5,7 @@ require 'securerandom'
 require 'sinatra'
 require_relative 'message'
 
-configure :production do
+configure do
   set :token, ENV['TOKEN'] || SecureRandom.urlsafe_base64
   puts "Token set to #{settings.token}"
 end
@@ -26,7 +26,7 @@ helpers do
 end
 
 before do
-  halt 403 if settings.production? && !check_signature
+  error 404 unless check_signature
   logger.debug request.body.read
 end
 
