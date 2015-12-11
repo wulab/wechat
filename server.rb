@@ -3,6 +3,7 @@ require 'bundler/setup'
 require 'digest/sha1'
 require 'securerandom'
 require 'sinatra'
+require_relative 'eliza'
 require_relative 'message'
 
 configure do
@@ -48,7 +49,7 @@ post '/' do
     sender:    incoming.recipient,
     recipient: incoming.sender,
     sent_at:   Time.now.utc,
-    content:   "I don't understand what you said"
+    content:   Eliza.eliza_rule(incoming.content.downcase.split, Rule::ELIZA_RULES)
   )
 
   body outgoing.to_xml
