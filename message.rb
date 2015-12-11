@@ -62,14 +62,14 @@ end
 
 def test
   incoming = Message.parse(<<-XML)
-    <xml>
-      <ToUserName><![CDATA[gh_d82667417b44]]></ToUserName>
-      <FromUserName><![CDATA[oHQYpv0JfYXtQ1aJOUKJd4mnxMYs]]></FromUserName>
-      <CreateTime>1449644190</CreateTime>
-      <MsgType><![CDATA[text]]></MsgType>
-      <Content><![CDATA[hello]]></Content>
-      <MsgId>6226174387287320382</MsgId>
-    </xml>
+<xml>
+  <ToUserName><![CDATA[gh_d82667417b44]]></ToUserName>
+  <FromUserName><![CDATA[oHQYpv0JfYXtQ1aJOUKJd4mnxMYs]]></FromUserName>
+  <CreateTime>1449644190</CreateTime>
+  <MsgType><![CDATA[text]]></MsgType>
+  <Content><![CDATA[hello]]></Content>
+  <MsgId>6226174387287320382</MsgId>
+</xml>
   XML
   incoming = Message.parse( incoming.to_xml )
 
