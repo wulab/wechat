@@ -24,6 +24,15 @@ helpers do
 
     tmp_str == signature
   end
+
+  def reply(message, content)
+    Message.new(
+      sender:    message.recipient,
+      recipient: message.sender,
+      sent_at:   Time.now.utc,
+      content:   content
+    )
+  end
 end
 
 before do
@@ -44,14 +53,8 @@ end
 post '/' do
   request.body.rewind
   incoming = Message.parse(request.body.read)
-
-  outgoing = Message.new(
-    sender:    incoming.recipient,
-    recipient: incoming.sender,
-    sent_at:   Time.now.utc,
-    content:   Eliza.eliza_rule(incoming.content.downcase.split, Rule::ELIZA_RULES)
-  )
-
+  response = Eliza.eliza_rule(incoming.content.downcase.split, Rule::ELIZA_RULES)
+  outgoing = reply(incoming, response)
   body outgoing.to_xml
 end
 
