@@ -65,6 +65,14 @@ post '/' do
 end
 
 post '/' do
+  pass unless request_body.include?('<MsgType><![CDATA[event]]></MsgType>')
+  incoming = UnknownMessage.parse(request_body)
+  response = "WeChat just sent me your #{incoming.event} event"
+  outgoing = reply(incoming, response)
+  body outgoing.to_xml
+end
+
+post '/' do
   incoming = UnknownMessage.parse(request_body)
   response = "I don't understand your #{incoming.type} message"
   outgoing = reply(incoming, response)

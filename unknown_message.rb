@@ -1,13 +1,14 @@
 require_relative 'message'
 
 class UnknownMessage < Message
-  attr_reader :type
+  attr_reader :type, :event
 
   def self.parse(xml)
     document  = Oga.parse_xml( xml )
 
     id        = text_at_xpath('xml/MsgId'       , document)
     type      = text_at_xpath('xml/MsgType'     , document)
+    event     = text_at_xpath('xml/Event'       , document)
     sender    = text_at_xpath('xml/FromUserName', document)
     recipient = text_at_xpath('xml/ToUserName'  , document)
     sent_at   = text_at_xpath('xml/CreateTime'  , document)
@@ -17,16 +18,18 @@ class UnknownMessage < Message
       sender:    sender,
       recipient: recipient,
       sent_at:   Time.at( sent_at.to_i ).utc,
-      type:      type
+      type:      type,
+      event:     event
     )
   end
 
-  def initialize(id: nil, sender:, recipient:, sent_at:, type:)
+  def initialize(id: nil, sender:, recipient:, sent_at:, type:, event: nil)
     @id        = id
     @sender    = sender
     @recipient = recipient
     @sent_at   = sent_at
     @type      = type
+    @event     = event
   end
 
   def to_xml
@@ -37,6 +40,8 @@ class UnknownMessage < Message
   <CreateTime>#{sent_at.to_i}</CreateTime>
   <MsgType><![CDATA[#{type}]]></MsgType>#{
     "\n  <MsgId>#{id}</MsgId>" unless id.nil?
+  }#{
+    "\n  <Event>#{event}</Event>" unless event.nil?
   }
 </xml>
     XML
@@ -44,7 +49,7 @@ class UnknownMessage < Message
 end
 
 def test
-  incoming = UnknownMessage.parse(<<-XML)
+  message = UnknownMessage.parse(<<-XML)
 <xml>
   <ToUserName><![CDATA[gh_d82667417b44]]></ToUserName>
   <FromUserName><![CDATA[oHQYpv0JfYXtQ1aJOUKJd4mnxMYs]]></FromUserName>
@@ -56,14 +61,39 @@ def test
   <MsgId>6226174387287320382</MsgId>
 </xml>
   XML
-  incoming = UnknownMessage.parse( incoming.to_xml )
+  message = UnknownMessage.parse( message.to_xml )
 
-  assert incoming.is_a?(Message)
-  assert incoming.id           == '6226174387287320382'
-  assert incoming.type         == 'voice'
-  assert incoming.sender       == 'oHQYpv0JfYXtQ1aJOUKJd4mnxMYs'
-  assert incoming.recipient    == 'gh_d82667417b44'
-  assert incoming.sent_at.to_s == '2015-12-09 06:56:30 UTC'
+  assert message.is_a?(Message)
+  assert message.id           == '6226174387287320382'
+  assert message.type         == 'voice'
+  assert message.sender       == 'oHQYpv0JfYXtQ1aJOUKJd4mnxMYs'
+  assert message.recipient    == 'gh_d82667417b44'
+  assert message.sent_at.to_s == '2015-12-09 06:56:30 UTC'
+
+  assert message.event.nil?
+  assert !message.to_xml.include?('<Event>')
+
+  event = UnknownMessage.parse(<<-XML)
+<xml>
+  <ToUserName><![CDATA[gh_d82667417b44]]></ToUserName>
+  <FromUserName><![CDATA[oHQYpv0JfYXtQ1aJOUKJd4mnxMYs]]></FromUserName>
+  <CreateTime>1449644190</CreateTime>
+  <MsgType><![CDATA[event]]></MsgType>
+  <Event><![CDATA[view]]></Event>
+  <EventKey><![CDATA[www.qq.com]]></EventKey>
+</xml>
+  XML
+  event = UnknownMessage.parse( event.to_xml )
+
+  assert event.is_a?(Message)
+  assert event.type         == 'event'
+  assert event.event        == 'view'
+  assert event.sender       == 'oHQYpv0JfYXtQ1aJOUKJd4mnxMYs'
+  assert event.recipient    == 'gh_d82667417b44'
+  assert event.sent_at.to_s == '2015-12-09 06:56:30 UTC'
+
+  assert event.id.nil?
+  assert !event.to_xml.include?('<MsgId>')
 
   puts "#{@assert_count} tests passed"
 end
