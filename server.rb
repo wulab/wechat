@@ -4,7 +4,8 @@ require 'digest/sha1'
 require 'securerandom'
 require 'sinatra'
 require_relative 'eliza'
-require_relative 'message'
+require_relative 'text_message'
+require_relative 'unknown_message'
 
 configure do
   set :token, ENV['TOKEN'] || SecureRandom.urlsafe_base64
@@ -25,8 +26,13 @@ helpers do
     tmp_str == signature
   end
 
+  def request_body
+    request.body.rewind
+    request.body.read
+  end
+
   def reply(message, content)
-    Message.new(
+    TextMessage.new(
       sender:    message.recipient,
       recipient: message.sender,
       sent_at:   Time.now.utc,
@@ -37,7 +43,7 @@ end
 
 before do
   error 404 unless check_signature
-  logger.debug request.body.read
+  logger.debug request_body
 end
 
 after do
@@ -51,9 +57,16 @@ end
 
 # http://admin.wechat.com/wiki/index.php?title=Common_Messages
 post '/' do
-  request.body.rewind
-  incoming = Message.parse(request.body.read)
+  pass unless request_body.include?('<MsgType><![CDATA[text]]></MsgType>')
+  incoming = TextMessage.parse(request_body)
   response = Eliza.eliza_rule(incoming.content.downcase.split, Rule::ELIZA_RULES)
+  outgoing = reply(incoming, response)
+  body outgoing.to_xml
+end
+
+post '/' do
+  incoming = UnknownMessage.parse(request_body)
+  response = "I don't understand your #{incoming.type} message"
   outgoing = reply(incoming, response)
   body outgoing.to_xml
 end
