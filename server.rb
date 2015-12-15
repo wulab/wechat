@@ -1,11 +1,10 @@
 require 'rubygems'
 require 'bundler/setup'
+require 'active_support/core_ext/hash'
 require 'digest/sha1'
 require 'securerandom'
 require 'sinatra'
-require_relative 'eliza'
-require_relative 'text_message'
-require_relative 'unknown_message'
+require_relative 'chatbot_factory'
 
 configure do
   set :token, ENV['TOKEN'] || SecureRandom.urlsafe_base64
@@ -31,12 +30,22 @@ helpers do
     request.body.read
   end
 
-  def reply(message, content)
-    TextMessage.new(
-      sender:    message.recipient,
-      recipient: message.sender,
-      sent_at:   Time.now.utc,
-      content:   content
+  def received_message
+    document = Hash.from_xml( request_body )
+    document['xml']
+  end
+
+  def valid_message?(message)
+    message.key?( 'MsgType' )
+  end
+
+  def to_xml(hash)
+    hash.to_xml(
+      dasherize:     false,
+      indent:        2,
+      root:          'xml',
+      skip_instruct: true,
+      skip_types:    true
     )
   end
 end
@@ -57,26 +66,15 @@ end
 
 # http://admin.wechat.com/wiki/index.php?title=Common_Messages
 post '/' do
-  pass unless request_body.include?('<MsgType><![CDATA[text]]></MsgType>')
-  incoming = TextMessage.parse(request_body)
-  response = Eliza.eliza_rule(incoming.content.downcase.split, Rule::ELIZA_RULES)
-  outgoing = reply(incoming, response)
-  body outgoing.to_xml
-end
+  factory = ChatbotFactory.new
+  chatbot = factory.create_chatbot( received_message )
+  message = chatbot.reply_message( received_message )
 
-post '/' do
-  pass unless request_body.include?('<MsgType><![CDATA[event]]></MsgType>')
-  incoming = UnknownMessage.parse(request_body)
-  response = "WeChat just sent me your #{incoming.event} event"
-  outgoing = reply(incoming, response)
-  body outgoing.to_xml
-end
-
-post '/' do
-  incoming = UnknownMessage.parse(request_body)
-  response = "I don't understand your #{incoming.type} message"
-  outgoing = reply(incoming, response)
-  body outgoing.to_xml
+  if valid_message?(message)
+    body to_xml(message)
+  else
+    body ''
+  end
 end
 
 error NotImplementedError do
