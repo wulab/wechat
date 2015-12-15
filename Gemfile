@@ -4,3 +4,4 @@ gem "sinatra"
 gem "thin"
 gem "activesupport", require: false
 gem "builder", require: false
+gem "geocoder", require: false
