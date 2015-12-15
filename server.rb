@@ -6,30 +6,6 @@ require 'securerandom'
 require 'sinatra'
 require_relative 'chatbot_factory'
 
-configure :production do
-  set :token, ENV['TOKEN'] || SecureRandom.urlsafe_base64
-  puts "Token set to #{settings.token}"
-
-  helpers do
-    # http://admin.wechat.com/wiki/index.php?title=Message_Authentication
-    def check_signature
-      nonce     = params[:nonce]
-      signature = params[:signature]
-      timestamp = params[:timestamp]
-
-      tmp_arr = [settings.token, timestamp, nonce].compact.sort
-      tmp_str = tmp_arr.join
-      tmp_str = Digest::SHA1.hexdigest(tmp_str)
-
-      tmp_str == signature
-    end
-  end
-
-  before do
-    error 404 unless check_signature
-  end
-end
-
 helpers do
   def request_body
     request.body.rewind
@@ -57,11 +33,35 @@ helpers do
 end
 
 before do
-  logger.debug request_body
+  logger.info('request') { "\n#{ request_body }" } if request.post?
 end
 
 after do
-  logger.debug body
+  logger.info('response') { "\n#{ body[0] }" }
+end
+
+configure :production do
+  set :token, ENV['TOKEN'] || SecureRandom.urlsafe_base64
+  puts "Token set to #{settings.token}"
+
+  helpers do
+    # http://admin.wechat.com/wiki/index.php?title=Message_Authentication
+    def check_signature
+      nonce     = params[:nonce]
+      signature = params[:signature]
+      timestamp = params[:timestamp]
+
+      tmp_arr = [settings.token, timestamp, nonce].compact.sort
+      tmp_str = tmp_arr.join
+      tmp_str = Digest::SHA1.hexdigest(tmp_str)
+
+      tmp_str == signature
+    end
+  end
+
+  before do
+    error 404 unless check_signature
+  end
 end
 
 # http://admin.wechat.com/wiki/index.php?title=Getting_Started
