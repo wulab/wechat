@@ -37,7 +37,7 @@ before do
 end
 
 after do
-  logger.info('response') { "\n#{ body[0] }" }
+  logger.info('response') { "\n#{ body.first }" }
 end
 
 configure :production do

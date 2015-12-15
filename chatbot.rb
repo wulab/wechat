@@ -1,3 +1,6 @@
+require 'rubygems'
+require 'bundler/setup'
+require 'geocoder'
 require_relative 'eliza'
 
 class Chatbot
@@ -45,13 +48,23 @@ class MonitorBot < Chatbot
 
     message = nil
 
-    case type
-    when 'text'
+    case
+    when type == 'text'
       message = {}
-    when 'event'
-      message = text_message("WeChat just sent me your #{event} event")
+    when type == 'event' && event == 'location'
+      latitude  = received_msg['Latitude']
+      longitude = received_msg['Longitude']
+      results   = Geocoder.search( "#{ latitude },#{ longitude }" )
+      message   = text_message( "How is the weather in #{results.first.city}?" )
+    when type == 'event' && event == 'subscribe'
+      message = text_message(
+        "Welcome to our official account! I am Eliza. " \
+        "Mention my name (@eliza) to talk about anything."
+      )
+    when type == 'event'
+      message = text_message( "WeChat just sent me your #{event} event" )
     else
-      message = text_message("I don't understand your #{type} message yet")
+      message = text_message( "I don't understand your #{type} message yet" )
     end
 
     message
