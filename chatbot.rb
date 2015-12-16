@@ -46,16 +46,16 @@ class MonitorBot < Chatbot
     type  = received_msg['MsgType'].to_s.downcase
     event = received_msg['Event'  ].to_s.downcase
 
-    message = nil
+    message = {}
 
     case
+    when type == 'text' && rand > 0.75
+      message = text_message( "Mention my name (@eliza) to talk about anything." )
     when type == 'text'
-      message = {}
-    when type == 'event' && event == 'location'
-      latitude  = received_msg['Latitude']
-      longitude = received_msg['Longitude']
-      results   = Geocoder.search( "#{ latitude },#{ longitude }" )
-      message   = text_message( "How is the weather in #{results.first.city}?" )
+      # Do nothing
+    when type == 'event' && event == 'location' && rand > 0.75
+      results = Geocoder.search( "#{ received_msg['Latitude'] }, #{ received_msg['Longitude'] }" )
+      message = text_message( "How is the weather in #{results.first.city}?" )
     when type == 'event' && event == 'subscribe'
       message = text_message(
         "Welcome to our official account! I am Eliza. " \
